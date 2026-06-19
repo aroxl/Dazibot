@@ -1,0 +1,3 @@
+solana==0.30.0
+websockets
+aiohttp
