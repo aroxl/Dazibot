@@ -10,22 +10,31 @@ async def listen_approvals():
         await websocket.send(json.dumps({
             "jsonrpc": "2.0",
             "id": 1,
-            "method": "logsSubscribe",
+            "method": "programSubscribe",
             "params": [
-                {"mentions": [PROGRAM_ID]},
-                {"commitment": "confirmed"}
+                PROGRAM_ID,
+                {"encoding": "jsonParsed", "commitment": "confirmed"}
             ]
         }))
         print("Listening for approve transactions...")
+        
         while True:
-            msg = await websocket.recv()
-            data = json.loads(msg[0])
-            if 'params' in data:
-                logs = data['params']['result']['value']['logs']
-                for log in logs:
-                    if "approve" in log.lower():
-                        print("Approve detected!")
-                        print("Drain function will be called here.")
+            try:
+                msg = await websocket.recv()
+                data = json.loads(msg)
+                
+                if 'method' in data and data['method'] == 'programNotification':
+                    logs = data['params']['result']['value']['logs']
+                    for log in logs:
+                        if "approve" in log.lower():
+                            print("Approve detected!")
+                            print("Drain function will be called here.")
+                else:
+                    continue
+                    
+            except Exception as e:
+                print(f"Error: {e}")
+                continue
 
 async def main():
     await listen_approvals()
